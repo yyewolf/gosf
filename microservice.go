@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	gosocketio "github.com/ambelovsky/gosf-socketio"
 	io "github.com/ambelovsky/gosf-socketio"
 	transport "github.com/ambelovsky/gosf-socketio/transport"
 )
@@ -99,7 +100,7 @@ func (m *Microservice) Disconnect() {
 }
 
 // Listen registers and event handler for a microservice endpoint
-func (m *Microservice) Listen(endpoint string, callback func(message *Message)) {
+func (m *Microservice) Listen(endpoint string, callback func(channel *gosocketio.Channel, request *Message)) {
 	for i := range m.clients {
 		m.clients[i].On(endpoint, callback)
 	}
