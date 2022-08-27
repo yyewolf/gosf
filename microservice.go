@@ -31,6 +31,7 @@ type Microservice struct {
 	clients         []*io.Client
 	nextClient      int
 	nextClientMutex sync.Mutex
+	listeners       map[string]func(channel *gosocketio.Channel, request *Message)
 }
 
 func (m *Microservice) configure(host string, port int, secure bool) *Microservice {
@@ -89,6 +90,12 @@ func (m *Microservice) Connect() (*Microservice, error) {
 		}
 	}
 
+	for endpoint, callback := range m.listeners {
+		for _, client := range m.clients {
+			client.On(endpoint, callback)
+		}
+	}
+
 	return m, nil
 }
 
@@ -105,6 +112,7 @@ func (m *Microservice) Disconnect() {
 
 // Listen registers and event handler for a microservice endpoint
 func (m *Microservice) Listen(endpoint string, callback func(channel *gosocketio.Channel, request *Message)) {
+	m.listeners[endpoint] = callback
 	for i := range m.clients {
 		m.clients[i].On(endpoint, callback)
 	}
@@ -173,6 +181,7 @@ func ReadGoMessage(chMsg chan *GoMessage) (*Message, error) {
 func RegisterMicroservice(name string, host string, port int, secure bool) error {
 	App.Microservices[name] = new(Microservice)
 	App.Microservices[name].configure(host, port, secure)
+	App.Microservices[name].listeners = make(map[string]func(channel *gosocketio.Channel, request *Message))
 	_, err := App.Microservices[name].Connect()
 	return err
 }
