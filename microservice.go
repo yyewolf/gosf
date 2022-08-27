@@ -50,6 +50,10 @@ func (m *Microservice) Connected() bool {
 
 	connected := true
 	for _, c := range m.clients {
+		if c == nil {
+			connected = false
+			break
+		}
 		if !c.IsAlive() {
 			connected = false
 			break
