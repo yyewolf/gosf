@@ -77,6 +77,38 @@ func Startup(config map[string]interface{}) {
 	startHTTPServer(config, secure, address, port, path)
 }
 
+// Sets up the SocketIO server ONLY USE ONCE
+func GetHandler(config map[string]interface{}) http.Handler {
+	/*** CONFIG ***/
+
+	if config["rejectInvalidHostnames"] != nil {
+		ioTransport.UnsecureTLS = !config["rejectInvalidHostnames"].(bool)
+		ioServer.UpdateTransport(ioTransport)
+	}
+
+	if config["enableCORS"] != nil {
+		corsDomain := config["enableCORS"].(string)
+		ioServer.EnableCORS(corsDomain)
+	}
+
+	/*** END CONFIG ***/
+
+	// Activate configured plugins
+	for _, plugin := range plugins {
+		plugin.Activate(&App)
+	}
+
+	// Start connection handlers
+	startConnectionHandlers()
+
+	return handler()
+}
+
+// Returns an HTTP handler for the SocketIO server (for use with already set up HTTP servers)
+func handler() http.Handler {
+	return ioServer
+}
+
 // Shutdown cleanly terminates the framework and its plugins
 func Shutdown() {
 	// Deactivate configured plugins
