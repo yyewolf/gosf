@@ -8,6 +8,10 @@ type Client struct {
 	Rooms   []string
 }
 
+func (c *Client) GetChannel() *io.Channel {
+	return c.channel
+}
+
 // Join joins a user to a broadcast room
 func (c *Client) Join(room string) {
 	c.channel.Join(room)
